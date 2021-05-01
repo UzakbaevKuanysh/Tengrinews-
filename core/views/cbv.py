@@ -1,3 +1,4 @@
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -72,4 +73,16 @@ class AuthorViewSet(viewsets.GenericViewSet,
                     mixins.DestroyModelMixin):
     queryset = Author.objects.all()
     serializer_class = AuthorSerializer
-    permission_classes = [IsAdminUser]
+
+    def get_permissions(self):
+        if self.request.method.lower() == 'get':
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAdminUser]
+        return [permission() for permission in permission_classes]
+
+    @action(detail=True, url_path='news')
+    def get_category_products(self, request, pk=None):
+        category_news = News.objects.filter(author_id=pk)
+        serializer = NewsSerializer(category_news, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
